@@ -10,11 +10,11 @@ A **3-stage agentic AI pipeline, built end-to-end on [n8n](https://n8n.io)**, th
 **Human in the loop by design:** the pipeline automates the tedious part - monitoring, qualification, and drafting - but stops short of contacting anyone. Every qualified lead lands in a BD reviewer's inbox, where a person checks the signal, edits the drafted content, and decides whether to pursue.
 
 **At a glance:** 
-- 3 independent workflows 
-- 15+ monitored data sources 
-- 20+ prospects qualified per run 
-- ~50% less manual research effort 
-- self-hosted with parallel error monitoring.
+- 3 independent workflows + 1 shared image-generation sub-workflow
+- 15+ monitored data sources
+- 20+ prospects qualified per run
+- ~50% less manual research effort
+- self-hosted with parallel error monitoring
 
 > Built for an enterprise client in regulated manufacturing. This is a sanitized, portfolio version - client names, internal infrastructure, credentials, and proprietary scoring rules have been removed or generalized.
 
@@ -99,11 +99,58 @@ Three independent workflows share one architectural pattern but differ in signal
                     BD reviews the signal & drafted content,
                     edits as needed, and decides whether to
                     pursue the lead using existing contact details.
+
+
+[Email Alert → internal BD reviewer]
+    (qualified lead + drafted outreach content
+     + "Generate image options" button per variation)
+            │
+    [Update Status = "Alerted"]
+            │
+            ▼
+    Human in the loop:
+    BD reviews the signal & drafted content,
+    edits as needed, and decides whether to
+    pursue the lead using existing contact details.
+            │
+    (optional, human-triggered)
+            ▼
+[Webhook: Generate Image Options]
+            │
+[Duplicate-request check] ── already requested → styled status response
+            │
+[Creative-Direction AI Agent] ── 3 stage-calibrated concepts
+            │
+[Image Generation ×3]
+            │
+[Follow-up email: 3 image options as attachments]
 ```
 
 **Mid-stage variation:** runs multiple evaluation agents (one per source) and consolidates them through a unified qualification filter before content generation, with raw data stored per source.
 
 ---
+
+### Visual creative generation (human-triggered)
+
+[](#visual-creative-generation-human-triggered)
+
+Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** lets a BD reviewer request AI-generated visual creative for any drafted content variation, directly from the alert email — no separate tool or login required.
+
+**How it works:**
+
+1. Each drafted content variation includes a "Generate image options" button, calling a webhook that carries the variation's ID and pipeline stage.
+2. The webhook routes to the correct stage's data, retrieves the underlying content context (headline, body copy, or concept brief depending on stage), and passes it to a **creative-direction AI agent**.
+3. The agent proposes three distinct, stage-calibrated image directions (e.g. early-stage signals favor editorial/innovation framing, late-stage favors momentum/decision framing) and passes each to an image-generation model.
+4. The three resulting images are attached to a follow-up email as PNG files alongside their creative rationale, ready for the reviewer to pick from.
+
+**Design constraints solved:**
+
+- **Duplicate-request protection** - a status flag per content row ensures repeated clicks don't trigger repeated (costly) generations; the reviewer instead sees a clear "already generated - check your inbox" response.
+- **Email client compatibility** - inline/embedded images were tested but proved unreliable across email clients (notably Outlook); images are delivered as standard attachments instead, which render consistently everywhere.
+- **Styled webhook responses** - rather than plain-text confirmation, the webhook returns lightweight styled HTML so the click-through experience (generating / already requested / error states) is visually clear and on-brand, not a raw browser default.
+
+This turns a static content-review email into a lightweight, self-serve creative request tool - still fully human-gated, since nothing is generated without an explicit BD click.
+--
 
 ## Qualification logic
 
@@ -148,6 +195,13 @@ A dedicated error-handling workflow runs in parallel across all three stages and
 On failure, it sends an automated notification to the workflow owner - no manual log-watching required.
 
 ---
+**Lessons learned in production:**
+
+- **Pass-by-reference over implicit context** - relying on the "current item" (`$json`) after a node that doesn't guarantee item-to-item traceability (e.g. an HTTP response from a transactional email API) can silently drop upstream fields. Referencing a specific upstream node by name (`$('NodeName')`) proved more robust wherever branch logic downstream depended on fields set earlier in the flow.
+- **Data schema drift across near-identical branches** - Each stage's data table used different column names for conceptually identical fields, which was hidden by normalization early in the flow but resurfaced whenever a later node accidentally bypassed the normalized shape. Solved by tracing every downstream reference back to its normalized source rather than assuming a shared shape across stages.
+- **Silent routing failures** - a Switch/Router node with no matching branch fails quietly rather than erroring, which can look identical to "no data" upstream. Adding explicit fallback branches (or defensive expression scoping) surfaces this instead of leaving it to look like a dead end.
+
+---
 
 ## Scaling roadmap
 
@@ -163,3 +217,4 @@ Designed for the initial scope, with a clear path forward as volume grows:
 ## What I owned
 
 Solution design, workflow implementation, AI agent prompt design and qualification logic, scraping/API integrations, cost optimization, and error handling - end to end.
+- **Image generation:** OpenAI image model, 1536×1024 output, delivered as email attachments (not inline, for cross-client rendering reliability)
