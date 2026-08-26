@@ -1,6 +1,6 @@
 # Multi-Agent Lead Signal Pipeline (n8n)
 
-> 🧭 **Portfolio project by Elijah Peh** - Solutions Engineer / Forward-Deployed Engineer.
+> 🧭 **Portfolio project by Elijah Peh** - Technical Implementation Specialist / Solutions Engineer
 > - Connect on [LinkedIn](https://www.linkedin.com/in/elijah-peh-3b5bb8ba/).
 
 A **3-stage agentic AI pipeline, built end-to-end on [n8n](https://n8n.io)**, that continuously monitors industry and regulatory sources, uses AI to spot and qualify high-value sales signals, and hands each qualified opportunity to the business's BD team with outreach content already drafted - ready to review, tweak, and send.
@@ -90,7 +90,8 @@ Three independent workflows share one architectural pattern but differ in signal
                     [Content Store]
                             │
                     [Email Alert → internal BD reviewer]
-                    (qualified lead + drafted outreach content)
+                    (qualified lead + drafted outreach content
+                     + "Generate image options" button per variation)
                             │
                     [Update Status = "Alerted"]
                             │
@@ -99,31 +100,18 @@ Three independent workflows share one architectural pattern but differ in signal
                     BD reviews the signal & drafted content,
                     edits as needed, and decides whether to
                     pursue the lead using existing contact details.
-
-
-[Email Alert → internal BD reviewer]
-    (qualified lead + drafted outreach content
-     + "Generate image options" button per variation)
-            │
-    [Update Status = "Alerted"]
-            │
-            ▼
-    Human in the loop:
-    BD reviews the signal & drafted content,
-    edits as needed, and decides whether to
-    pursue the lead using existing contact details.
-            │
-    (optional, human-triggered)
-            ▼
-[Webhook: Generate Image Options]
-            │
-[Duplicate-request check] ── already requested → styled status response
-            │
-[Creative-Direction AI Agent] ── 3 stage-calibrated concepts
-            │
-[Image Generation ×3]
-            │
-[Follow-up email: 3 image options as attachments]
+                            │
+                    (optional, human-triggered)
+                            ▼
+                    [Webhook: Generate Image Options]
+                            │
+                    [Duplicate-request check] ── already requested → styled status response
+                            │
+                    [Creative-Direction AI Agent] ── 3 stage-calibrated concepts
+                            │
+                    [Image Generation ×3]
+                            │
+                    [Follow-up email: 3 image options as attachments]
 ```
 
 **Mid-stage variation:** runs multiple evaluation agents (one per source) and consolidates them through a unified qualification filter before content generation, with raw data stored per source.
@@ -131,8 +119,6 @@ Three independent workflows share one architectural pattern but differ in signal
 ---
 
 ### Visual creative generation (human-triggered)
-
-[](#visual-creative-generation-human-triggered)
 
 Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** lets a BD reviewer request AI-generated visual creative for any drafted content variation, directly from the alert email — no separate tool or login required.
 
@@ -150,6 +136,7 @@ Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** let
 - **Styled webhook responses** - rather than plain-text confirmation, the webhook returns lightweight styled HTML so the click-through experience (generating / already requested / error states) is visually clear and on-brand, not a raw browser default.
 
 This turns a static content-review email into a lightweight, self-serve creative request tool - still fully human-gated, since nothing is generated without an explicit BD click.
+
 ---
 
 ## Qualification logic
@@ -178,6 +165,7 @@ This turns a static content-review email into a lightweight, self-serve creative
 - **Web scraping:** managed scraping API (handles JS-rendered pages & anti-bot protection)
 - **AI agents:** OpenAI GPT-4.1 - powers all evaluation and content-generation agents
 - **Email delivery:** transactional email API
+- **Image generation:** OpenAI image model, 1536×1024 output, delivered as email attachments (not inline, for cross-client rendering reliability)
 - **Data:** workflow-scoped tables (raw source data, evaluation results, generated content), separated by workflow and data type
 
 > **Cost note:** token consumption is the primary cost driver. The deduplication step is what keeps it in check - filtering already-processed articles out *before* they reach an agent.
@@ -194,7 +182,6 @@ A dedicated error-handling workflow runs in parallel across all three stages and
 
 On failure, it sends an automated notification to the workflow owner - no manual log-watching required.
 
----
 **Lessons learned in production:**
 
 - **Pass-by-reference over implicit context** - relying on the "current item" (`$json`) after a node that doesn't guarantee item-to-item traceability (e.g. an HTTP response from a transactional email API) can silently drop upstream fields. Referencing a specific upstream node by name (`$('NodeName')`) proved more robust wherever branch logic downstream depended on fields set earlier in the flow.
@@ -217,4 +204,3 @@ Designed for the initial scope, with a clear path forward as volume grows:
 ## What I owned
 
 Solution design, workflow implementation, AI agent prompt design and qualification logic, scraping/API integrations, cost optimization, and error handling - end to end.
-- **Image generation:** OpenAI image model, 1536×1024 output, delivered as email attachments (not inline, for cross-client rendering reliability)
