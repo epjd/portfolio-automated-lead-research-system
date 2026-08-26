@@ -150,7 +150,7 @@ Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** let
 - **Styled webhook responses** - rather than plain-text confirmation, the webhook returns lightweight styled HTML so the click-through experience (generating / already requested / error states) is visually clear and on-brand, not a raw browser default.
 
 This turns a static content-review email into a lightweight, self-serve creative request tool - still fully human-gated, since nothing is generated without an explicit BD click.
---
+---
 
 ## Qualification logic
 
