@@ -120,7 +120,7 @@ Three independent workflows share one architectural pattern but differ in signal
 
 ### Visual creative generation (human-triggered)
 
-Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** lets a BD reviewer request AI-generated visual creative for any drafted content variation, directly from the alert email — no separate tool or login required.
+Beyond the qualification and drafting pipeline, a **dedicated sub-workflow** lets a BD reviewer request AI-generated visual creative for any drafted content variation, directly from the alert email - no separate tool or login required.
 
 **How it works:**
 
