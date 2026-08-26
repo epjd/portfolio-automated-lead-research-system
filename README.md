@@ -74,23 +74,23 @@ Three independent workflows share one architectural pattern but differ in signal
 [Schedule Trigger]
         │
         ▼
-[Lead List] ── Filter: Status = "Active"
+[Lead List] - Filter: Status = "Active"
         │
         ▼
 [Source Scraping / API Query]
 (web scraping for news sources / direct API for regulatory sources)
         │
         ▼
-[HTML Cleaning & Article Extraction] ── code node
+[HTML Cleaning & Article Extraction] - code node
         │
         ▼
-[Deep Article Extraction] ── web sources only
+[Deep Article Extraction] - web sources only
         │
         ▼
-[Deduplication & Token Optimisation] ── code node
+[Deduplication & Token Optimisation] - code node
         │
         ▼
-[AI Evaluation Agent] ── stage-specific qualify / disqualify logic
+[AI Evaluation Agent] - stage-specific qualify / disqualify logic
         │
         ├── Disqualified → stop
         └── Qualified →
@@ -116,9 +116,9 @@ Three independent workflows share one architectural pattern but differ in signal
                             ▼
                     [Webhook: Generate Image Options]
                             │
-                    [Duplicate-request check] ── already requested → styled status response
+                    [Duplicate-request check] - already requested → styled status response
                             │
-                    [Creative-Direction AI Agent] ── 3 stage-calibrated concepts
+                    [Creative-Direction AI Agent] - 3 stage-calibrated concepts
                             │
                     [Image Generation ×3]
                             │
